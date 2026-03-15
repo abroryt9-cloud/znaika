@@ -43,20 +43,21 @@ def admin_required(f):
 def load_user(user_id):
     return User.query.get(user_id)
 
-# Создание таблиц и тестового админа
-@app.before_first_request
-def create_tables():
-    db.create_all()
-    # Создаем тестового админа, если нет пользователей
-    if User.query.count() == 0:
-        admin_user = User(
-            username='admin',
-            email='admin@znaika.ru',
-            password_hash=generate_password_hash('admin123'),
-            role='admin'
-        )
-        db.session.add(admin_user)
-        db.session.commit()
+# Функция инициализации базы данных (вызывается при запуске)
+def init_db():
+    with app.app_context():
+        db.create_all()
+        # Создаем тестового админа, если нет пользователей
+        if User.query.count() == 0:
+            admin_user = User(
+                username='admin',
+                email='admin@znaika.ru',
+                password_hash=generate_password_hash('admin123'),
+                role='admin'
+            )
+            db.session.add(admin_user)
+            db.session.commit()
+            print("✅ Тестовый админ создан: admin / admin123")
 
 # ==================== ОСНОВНЫЕ СТРАНИЦЫ ====================
 
@@ -347,6 +348,10 @@ def get_messages(chat_id):
         'created_at': msg.created_at.isoformat()
     } for msg in messages])
 
+# ==================== ЗАПУСК ====================
+
 if __name__ == '__main__':
+    # Инициализируем базу данных перед запуском
+    init_db()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
